@@ -7,7 +7,7 @@ library(doParallel)
 
 # Specify simulation parameters here
 alpha <- 0.05
-n_cores <- 47
+n_cores <- 2
 
 EstCis <- function(fpath, alpha, n_boots, n_cores) {
   

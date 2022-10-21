@@ -6,8 +6,8 @@ library(dplyr)
 library(doParallel)
 
 # Specify simulation parameters here
-n_cores <- 47
-n_runs <- 5000
+n_cores <- 2
+n_runs <- 10  # set to 5000 to reproduce results in paper
 n_groundtruth <- 20000
 n_feats <- 1000
 n_models <- 100
