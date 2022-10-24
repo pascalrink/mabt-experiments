@@ -53,14 +53,14 @@ df$undercovers <- ifelse(
   df$coverage < df$acceptable_coverage, "undercovers", "valid") %>% factor
 
 
-# Figure 6b ----
+# Figure 7 ----
 coverage_df <- aggregate(covers ~ method + rule + n_eval + feats_type, df, mean)
 ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
   geom_bar(stat="identity", position = "dodge") + 
   geom_text(
     aes(label = substr(round(covers, 3), 2, 5)), vjust = 1.6, 
     color = "white", size = 3, position = position_dodge(width = .9)) + 
-  coord_cartesian(ylim = c(0.90, 0.97)) +
+  coord_cartesian(ylim = c(0.90, 0.96)) +
   facet_wrap(~ feats_type) + 
   labs(subtitle = "AUC: coverage probability",
        x        = "evaluation sample size",
@@ -70,10 +70,10 @@ ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
   scale_y_continuous(minor_breaks = seq(0, 1, 0.01)) +
   theme_minimal() +
   theme(legend.position = "bottom", legend.key.size = unit(10, "points"))
-ggsave("4-plots/figures/paper/figure-6b.eps")
+ggsave("4-plots/figures/paper/figure-7.eps")
 
 
-# Figure 7b ----
+# Figure 9 ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = bound, fill = method, color = undercovers)) + 
@@ -89,10 +89,10 @@ subset(df, covers == 1) %>%
        y        = "size of lower bound", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-7b.eps")
+ggsave("4-plots/figures/paper/figure-9.eps")
 
 
-# Figure 8b ----
+# Figure 11 ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = groundtruth - bound, 
@@ -110,10 +110,10 @@ subset(df, covers == 1) %>%
        y        = "", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-8b.eps")
+ggsave("4-plots/figures/paper/figure-11.eps")
 
 
-# Figure 9b ----
+# Figure 13 ----
 # true performance of final model does not depend on the confidence interval 
 # estimation method but on the selection rule; BT provides final model 
 # performance from 'single best' selection rule, MABT provides final model 
@@ -130,5 +130,5 @@ subset(df, method %in% c("BT", "MABT")) %>%
        x        = "evaluation sample size",
        y        = "",
        fill    = "")
-ggsave("4-plots/figures/paper/figure-9b.eps")
+ggsave("4-plots/figures/paper/figure-13.eps")
 

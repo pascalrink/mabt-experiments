@@ -53,7 +53,7 @@ df$undercovers <- ifelse(
   df$coverage < df$acceptable_coverage, "undercovers", "valid") %>% factor
 
 
-# Figure 6a ----
+# Figure 6 ----
 coverage_df <- aggregate(covers ~ method + rule + n_eval + feats_type, df, mean)
 ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
   geom_bar(stat = "identity", position = "dodge") + 
@@ -70,10 +70,10 @@ ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
   scale_y_continuous(minor_breaks = seq(0, 1, 0.01)) +
   theme_minimal() +
   theme(legend.position = "bottom", legend.key.size = unit(10, "points"))
-ggsave("4-plots/figures/paper/figure-6a.eps")
+ggsave("4-plots/figures/paper/figure-6.eps")
 
 
-# Figure 7a ----
+# Figure 8 ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = bound, fill = method, color = undercovers)) + 
@@ -89,10 +89,10 @@ subset(df, covers == 1) %>%
        y        = "", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-7a.eps")
+ggsave("4-plots/figures/paper/figure-8.eps")
 
 
-# Figure 8a ----
+# Figure 10 ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = groundtruth - bound, 
@@ -110,10 +110,10 @@ subset(df, covers == 1) %>%
        y        = "", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-8a.eps")
+ggsave("4-plots/figures/paper/figure-10.eps")
 
 
-# Figure 9a ----
+# Figure 12 ----
 # true performance of final model does not depend on the confidence interval 
 # estimation method but on the selection rule; BT provides final model 
 # performance from 'single best' selection rule, MABT provides final model 
@@ -130,6 +130,6 @@ subset(df, method %in% c("BT", "MABT")) %>%
        x        = "evaluation sample size",
        y        = "",
        fill     = "")
-ggsave("4-plots/figures/paper/figure-9a.eps")
+ggsave("4-plots/figures/paper/figure-12.eps")
 
 
