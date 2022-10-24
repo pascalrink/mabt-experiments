@@ -1,5 +1,3 @@
 # mabt-experiments
 
-This repository contains the R code to reproduce the simulation experiments as shown in Rink & Brannath (2022) "Multiplicity-adjusted bootstrap tilting lower confidence bounds for conditional prediction performance measures", including figures, and the real-data example. 
-
-For each of the simulation parameter configurations presented in the paper, we uploaded ten ...
+This repository contains the R code to reproduce the simulation experiments as shown in Rink & Brannath (2022) "Multiplicity-adjusted bootstrap tilting lower confidence bounds for conditional prediction performance measures", including figures, and the real-data example. The simulations we conducted are extensive, so we uploaded results to (a) the model estimation and selection process, and (b) the estimated confidence bounds from those models. Regarding (a) we only uploaded the results to the first ten runs. Please find the full set of model estimation and selection results at LINK. To replicate the results in the publication, replace the '1-savefiles' directory from GitHub with the unpacked ZIP file. The uploaded results to (b) however are completely uploaded here at GitHub. 
