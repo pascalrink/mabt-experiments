@@ -16,7 +16,7 @@ plot_dir <- "4-plots/figures/supplement/"
 
 # custom ggsave function to save in A4 format
 .myggsave <- function(filename) {
-  ggsave(filename=filename, width = 297, height = 210, units = "mm")
+  ggsave(filename=filename, height = 297, width = 210, units = "mm")
 }
 
 # returns all the result plots to a specific simulation parameter configuration
@@ -89,7 +89,7 @@ Plots <- function(fpath, plot_path, plot_name) {
       scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
       scale_color_manual(values = c("grey51", "black")) + 
       theme_minimal() + 
-      theme(legend.position = "bottom", legend.key.size = unit(10, "points"))
+      theme(legend.position = "none", legend.key.size = unit(10, "points"))
   }
   
   GroundtruthPlot <- function(df) {
@@ -132,8 +132,8 @@ Plots <- function(fpath, plot_path, plot_name) {
     plot_4 <- TightnessPlot(df)
     
     plots <- cowplot::plot_grid(
-      plot_1, plot_3, plot_2, plot_4,
-      ncol = 2)
+      plot_1, plot_2, plot_3, plot_4,
+      ncol = 1)
     return(plots)
   }
   

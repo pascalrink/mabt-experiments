@@ -30,7 +30,7 @@ df$method <- factor(df$method, c("bt", "clopper-pearson", "hanley-mcneal",
 df$method <- recode(df$method, 
                     "bt" = "BT", "clopper-pearson" = "CP", 
                     "hanley-mcneal" = "HMcN", "mabt" = "MABT", 
-                    "delong" = "DeLong", "wald" = "Wald", 
+                    "delong" = "Wilson/DeLong", "wald" = "Wald", 
                     "wilson" = "Wilson")
 df$rule <- recode(
   df$rule, "best" = "single best", "ten" = "top 10%", "se" = "within 1 SE")
@@ -53,7 +53,7 @@ df$undercovers <- ifelse(
   df$coverage < df$acceptable_coverage, "undercovers", "valid") %>% factor
 
 
-# Figure 7 ----
+# Figure 6b ----
 coverage_df <- aggregate(covers ~ method + rule + n_eval + feats_type, df, mean)
 ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
   geom_bar(stat="identity", position = "dodge") + 
@@ -62,18 +62,19 @@ ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
     color = "white", size = 3, position = position_dodge(width = .9)) + 
   coord_cartesian(ylim = c(0.90, 0.96)) +
   facet_wrap(~ feats_type) + 
-  labs(subtitle = "AUC: coverage probability",
+  labs(#subtitle = "AUC: coverage probability",
        x        = "evaluation sample size",
        y        = "", 
        fill     = "") +
   scale_fill_brewer(palette = "Set1") +
   scale_y_continuous(minor_breaks = seq(0, 1, 0.01)) +
   theme_minimal() +
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points"))
-ggsave("4-plots/figures/paper/figure-7.eps")
+  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
+        strip.text.x = element_blank())
+ggsave("4-plots/figures/paper/figure-6b.eps")
 
 
-# Figure 9 ----
+# Figure 7b ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = bound, fill = method, color = undercovers)) + 
@@ -83,16 +84,17 @@ subset(df, covers == 1) %>%
   scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
   scale_color_manual(values = c("grey51", "black")) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points")) + 
-  labs(title    = "AUC: lower confidence bound", 
+  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
+        strip.text.x = element_blank()) + 
+  labs(#title    = "AUC: lower confidence bound", 
        x        = "evaluation sample size", 
        y        = "size of lower bound", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-9.eps")
+ggsave("4-plots/figures/paper/figure-7b.eps")
 
 
-# Figure 11 ----
+# Figure 8b ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = groundtruth - bound, 
@@ -104,16 +106,17 @@ subset(df, covers == 1) %>%
   scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
   scale_color_manual(values = c("grey51", "black")) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points")) + 
-  labs(title    = "AUC: tightness", 
+  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
+        strip.text.x = element_blank()) + 
+  labs(#title    = "AUC: tightness", 
        x        = "evaluation sample size", 
        y        = "", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-11.eps")
+ggsave("4-plots/figures/paper/figure-8b.eps")
 
 
-# Figure 13 ----
+# Figure 9b ----
 # true performance of final model does not depend on the confidence interval 
 # estimation method but on the selection rule; BT provides final model 
 # performance from 'single best' selection rule, MABT provides final model 
@@ -125,10 +128,11 @@ subset(df, method %in% c("BT", "MABT")) %>%
   scale_fill_brewer(palette = "Set1", ) +
   scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) +
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points")) +
-  labs(title    = "AUC: true performance of final model",
+  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
+        strip.text.x = element_blank()) +
+  labs(#title    = "AUC: true performance of final model",
        x        = "evaluation sample size",
        y        = "",
        fill    = "")
-ggsave("4-plots/figures/paper/figure-13.eps")
+ggsave("4-plots/figures/paper/figure-9b.eps")
 

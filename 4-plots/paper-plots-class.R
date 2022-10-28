@@ -53,7 +53,7 @@ df$undercovers <- ifelse(
   df$coverage < df$acceptable_coverage, "undercovers", "valid") %>% factor
 
 
-# Figure 6 ----
+# Figure 6a ----
 coverage_df <- aggregate(covers ~ method + rule + n_eval + feats_type, df, mean)
 ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
   geom_bar(stat = "identity", position = "dodge") + 
@@ -62,18 +62,18 @@ ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
     color = "white", size = 3, position = position_dodge(width = .9)) + 
   coord_cartesian(ylim = c(0.9, 0.96)) +
   facet_wrap(~ feats_type) + 
-  labs(subtitle = "Prediction accuracy: coverage probability",
-       x        = "evaluation sample size",
+  labs(#title = "Prediction accuracy: coverage probability",
+       x        = "", #"evaluation sample size",
        y        = "", 
        fill     = "") +
   scale_fill_brewer(palette = "Set1") +
   scale_y_continuous(minor_breaks = seq(0, 1, 0.01)) +
   theme_minimal() +
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points"))
-ggsave("4-plots/figures/paper/figure-6.eps")
+  theme(legend.position = "none", legend.key.size = unit(10, "points"))
+ggsave("4-plots/figures/paper/figure-6a.eps")
 
 
-# Figure 8 ----
+# Figure 7a ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = bound, fill = method, color = undercovers)) + 
@@ -83,16 +83,16 @@ subset(df, covers == 1) %>%
   scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
   scale_color_manual(values = c("black", "grey51")) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points")) + 
-  labs(title    = "Predication accuracy: lower confidence bound", 
-       x        = "evaluation sample size", 
+  theme(legend.position = "none", legend.key.size = unit(10, "points")) + 
+  labs(#title    = "Predication accuracy: lower confidence bound", 
+       x        = "", #"evaluation sample size", 
        y        = "", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-8.eps")
+ggsave("4-plots/figures/paper/figure-7a.eps")
 
 
-# Figure 10 ----
+# Figure 8a ----
 subset(df, covers == 1) %>%
   ggplot(
     aes(x = factor(n_eval), y = groundtruth - bound, 
@@ -104,16 +104,16 @@ subset(df, covers == 1) %>%
   scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
   scale_color_manual(values = c("black", "grey51")) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points")) + 
-  labs(title    = "Predication accuracy: tightness", 
-       x        = "evaluation sample size", 
+  theme(legend.position = "none", legend.key.size = unit(10, "points")) + 
+  labs(#title    = "Predication accuracy: tightness", 
+       x        = "", #"evaluation sample size", 
        y        = "", 
        fill     = "", 
        color    = "")
-ggsave("4-plots/figures/paper/figure-10.eps")
+ggsave("4-plots/figures/paper/figure-8a.eps")
 
 
-# Figure 12 ----
+# Figure 9a ----
 # true performance of final model does not depend on the confidence interval 
 # estimation method but on the selection rule; BT provides final model 
 # performance from 'single best' selection rule, MABT provides final model 
@@ -125,11 +125,11 @@ subset(df, method %in% c("BT", "MABT")) %>%
   scale_fill_brewer(palette = "Set1", ) +
   scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) +
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points")) +
-  labs(title    = "Predication accuracy: true performance of final model",
-       x        = "evaluation sample size",
+  theme(legend.position = "none", legend.key.size = unit(10, "points")) +
+  labs(#title    = "Predication accuracy: true performance of final model",
+       x        = "", #"evaluation sample size",
        y        = "",
        fill     = "")
-ggsave("4-plots/figures/paper/figure-12.eps")
+ggsave("4-plots/figures/paper/figure-9a.eps")
 
 
