@@ -6,7 +6,7 @@ library(doParallel)
 
 source("5-example/GenCompTable-function.R")
 
-# n_cores <- 50
+# n_cores <- 40
 # n_runs <- 500
 
 # Read and prepare in data:
@@ -55,18 +55,18 @@ n_folds <- 10
 eps <- ifelse(nrow(learn)>ncol(learn), 0.0001, 0.01)
 
 CtgExampleAccuracy <- function(seed) {
-
+  
   model.list <- list()
   val.perform <- list()
   val.perform.sd <- list()
   for (i in 1:n_alpha_tune){
-
+    
     max.lambda <- glmnet::glmnet(learn[,-1], learn[,1],
                                  family="binomial",
                                  alpha=alpha_tune[i], # alpha=1 <=> LASSO, alpha=0 <=> RIDGE
                                  nlambda=n_lambda)$lambda[1]
     lambda.seq <- seq(max.lambda, eps*max.lambda, length.out = n_lambda)
-
+    
     set.seed(seed)
     model.list[[i]] <- glmnet::cv.glmnet(
       learn[, -1], learn[, 1], family = "binomial", alpha = alpha_tune[i],
@@ -75,13 +75,13 @@ CtgExampleAccuracy <- function(seed) {
     val.perform[[i]] <- 1 - model.list[[i]]$cvm
     val.perform.sd[[i]] <- model.list[[i]]$cvsd
   }
-
+  
   val.perform <- unlist(val.perform)
   val.perform.sd <- unlist(val.perform.sd)
   best.val.mod <- which.max(val.perform)
   within1SE_selection <- which(
     val.perform >= val.perform[best.val.mod] - val.perform.sd[best.val.mod])
-
+  
   preds <- list()
   for (i in 1:length(model.list)) {
     these_models <- model.list[[i]]
@@ -89,34 +89,34 @@ CtgExampleAccuracy <- function(seed) {
       these_models, test[, -1], s = these_models$lambda, type = "class") %>%
       unname
   }
-
+  
   preds <- do.call(cbind, preds)
-
+  
   similar_mat <- (preds == test[, 1]) * 1.0
   eval_perform <- colMeans(similar_mat) %>% unname
-
+  
   best.eval.mod <- within1SE_selection[
     which.max(eval_perform[within1SE_selection])]
   best.eval.perform <- eval_perform[best.eval.mod]
-
+  
   val.results <- val.perform[within1SE_selection]
   eval.results <- eval_perform[within1SE_selection]
-
+  
   val.ranks <- rank(1-val.results, ties.method = "first")
   eval.ranks <- rank(1-eval.results, ties.method = "first")
-
+  
   rank_mat <- data.frame(
     model = within1SE_selection, val.rank = val.ranks, eval.rank = eval.ranks)
   rank_mat$delta <- rank_mat$val.rank - rank_mat$eval.rank
-
+  
   results_mat <- cbind(val=val.results, eval=eval.results, rank_mat )
-
+  
   results_mat[, 1] <- round(results_mat[, 1], 4)
   results_mat[, 2] <- round(results_mat[, 2], 4)
   results_mat <- select(results_mat, -c(model, delta))
-
+  
   source("5-example/MabtCi-function.R")
-
+  
   # bootstrap
   within1SE_preds <- (preds[, within1SE_selection] == 1) * 1.0
   within1SE_similar_mat <- similar_mat[, within1SE_selection]
@@ -127,17 +127,27 @@ CtgExampleAccuracy <- function(seed) {
   select_id <- which(best.eval.mod == within1SE_selection)
   cls_thresh <- 0.5
   labs <- test[, 1]
-
+  
   mabt_ci <- MabtCi(
     eval_boot, alpha, measure, select_id, within1SE_preds, cls_thresh, labs)
-
+  
   # standard cis
   n_test <- nrow(preds)
   n_success <- eval_perform[best.val.mod] * n_test
+  ci_methods <- c("wilson", "clopper-pearson", "wald")
   default_cis <- DescTools::BinomCI(
     n_success, n_test, conf.level = 1-alpha, sides = "left",
-    method = c("wilson", "clopper-pearson", "wald"))
-
+    method = ci_methods)
+  
+  # Sidak CIs
+  n_success_sidak <- eval_perform[best.eval.mod] * n_test
+  sidak_alpha <- 1 - (1-alpha)^(1/length(within1SE_selection))
+  sidak_cis <- DescTools::BinomCI(
+    n_success_sidak, n_test, conf.level = 1-sidak_alpha, sides = "left",
+    method = ci_methods)
+  rownames(sidak_cis) <- paste0(ci_methods, "-sidak")
+  default_cis <- rbind(default_cis, sidak_cis)
+  
   rt_obj <- list(mat = results_mat, default = default_cis, mabt = mabt_ci)
   return(rt_obj)
 }
@@ -154,7 +164,7 @@ CtgExampleAccuracy <- function(seed) {
 # parallel::stopCluster(par_clust)
 # saveRDS(result_list, "5-example/ctg-example-accuracy-sim-results.RDS")
 
-## runtime = 6.8 mins
+## runtime = xyz mins on 40 cores
 
 # Comparison of results ----
 result_list <- readRDS("5-example/ctg-example-accuracy-sim-results.RDS")
