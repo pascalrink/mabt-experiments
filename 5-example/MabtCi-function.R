@@ -19,11 +19,8 @@ MabtCi <- function(
   t <- boot$t[, select_id]
   
   select_preds <- preds[, select_id]
-  # if (measure == "class") {
-  #   select_preds <- ((select_preds > cls_thresh) * 1.0 == labs) * 1.0
-  # }
   if (measure == "class") {
-    if (any(select_preds < 1)) {
+    if (data.table::between(select_preds, 0, 1, incbounds = FALSE) %>% min) {
       select_preds <- ((select_preds > cls_thresh) * 1.0 == labs) * 1.0
     } else {
       select_preds <- (select_preds == labs) * 1.0
