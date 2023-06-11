@@ -7,7 +7,7 @@ library(doParallel)
 source("5-example/GenCompTable-function.R")
 
 # n_cores <- 40
-# n_runs <- 500
+# n_runs <- 100
 
 # Read and prepare in data:
 # Note: I initially did a manual export via MS Excel from the original file CTG.xls
@@ -59,7 +59,8 @@ CtgExampleAccuracy <- function(seed) {
   model.list <- list()
   val.perform <- list()
   val.perform.sd <- list()
-  for (i in 1:n_alpha_tune){
+  set.seed(seed)
+  for (i in 1:n_alpha_tune) {
     
     max.lambda <- glmnet::glmnet(learn[,-1], learn[,1],
                                  family="binomial",
@@ -67,7 +68,6 @@ CtgExampleAccuracy <- function(seed) {
                                  nlambda=n_lambda)$lambda[1]
     lambda.seq <- seq(max.lambda, eps*max.lambda, length.out = n_lambda)
     
-    set.seed(seed)
     model.list[[i]] <- glmnet::cv.glmnet(
       learn[, -1], learn[, 1], family = "binomial", alpha = alpha_tune[i],
       lambda = lambda.seq, type.measure = "class", nfolds = n_folds)
@@ -162,15 +162,16 @@ CtgExampleAccuracy <- function(seed) {
 # t1 <- Sys.time()
 # t1-t0
 # parallel::stopCluster(par_clust)
-# saveRDS(result_list, "5-example/ctg-example-accuracy-sim-results.RDS")
+# saveRDS(result_list, "5-example/ctg-example-acc.RDS")
 
-## runtime = xyz mins on 40 cores
+## runtime = 2.8 mins on 40 cores
 
 # Comparison of results ----
-result_list <- readRDS("5-example/ctg-example-accuracy-sim-results.RDS")
+result_list <- readRDS("5-example/ctg-example-acc.RDS")
 comp_results <- GenCompTable(result_list)
 comp_results$table
 do.call(rbind, comp_results$ci) %>% aggregate(ci ~ method, ., summary)
 
 
-CtgExampleAccuracy(5959)   ## THE example  ## oder seed=99
+CtgExampleAccuracy(38) # 38 is THE (new) example  
+

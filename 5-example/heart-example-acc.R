@@ -9,8 +9,8 @@ library(doParallel)
 source("5-example/heart-example-helper-functions.R")
 source("5-example/GenCompTable-function.R")
 
-n_cores <- 50
-n_runs <- 500
+# n_cores <- 50
+# n_runs <- 500
 
 dat <- GetHeartData()
 

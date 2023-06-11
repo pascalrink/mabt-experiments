@@ -9,8 +9,8 @@ library(doParallel)
 source("5-example/heart-example-helper-functions.R")
 source("5-example/GenCompTable-function.R")
 
-n_cores <- 50
-n_runs <- 500
+# n_cores <- 50
+# n_runs <- 500
 
 dat <- GetHeartData()
 
@@ -112,17 +112,17 @@ HeartExampleAUC <- function(seed) {
   return(rt_obj)
 }
 
-par_clust <- parallel::makeCluster(n_cores)
-doParallel::registerDoParallel(par_clust)
-seeds <- seq(n_runs)
-t0 <- Sys.time()
-result_list <- foreach::foreach(seed = seeds, .packages = c("dplyr")) %dopar% {
-  return(HeartExampleAUC(seed))
-}
-t1 <- Sys.time()
-t1-t0
-parallel::stopCluster(par_clust)
-saveRDS(result_list, "5-example/heart-example-auc-sim-results.RDS")
+# par_clust <- parallel::makeCluster(n_cores)
+# doParallel::registerDoParallel(par_clust)
+# seeds <- seq(n_runs)
+# t0 <- Sys.time()
+# result_list <- foreach::foreach(seed = seeds, .packages = c("dplyr")) %dopar% {
+#   return(HeartExampleAUC(seed))
+# }
+# t1 <- Sys.time()
+# t1-t0
+# parallel::stopCluster(par_clust)
+# saveRDS(result_list, "5-example/heart-example-auc-sim-results.RDS")
 
 ## runtime = 7.3 mins
 
@@ -133,5 +133,5 @@ comp_results <- GenCompTable(result_list)
 comp_results$table
 do.call(rbind, comp_results$cis) %>% aggregate(ci ~ method, ., summary)
 
-HeartExampleAUC(28) ## ? schlechtes bsp...
+HeartExampleAUC(28) ## ? schlechtes bsp... 187
 
