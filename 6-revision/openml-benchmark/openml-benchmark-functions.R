@@ -1,19 +1,21 @@
-BenchmarkMabt <- function(n_cores) {
+BenchmarkMabt <- function(n_cores, tasks) {
   
   CIsForTask <- function(id) {
     library(tuneRanger)
     source("5-example/MabtCi-function.R")
     
-    task1 <- OpenML::getOMLTask(id) %>% OpenML::convertOMLTaskToMlr()
+    # task1 <- OpenML::getOMLTask(id) %>% OpenML::convertOMLTaskToMlr()
+    task1 <- tasks[[which(id == lapply(tasks, function(.task) .task$id))]]$task
     task1 <- task1$mlr.task
     task1.data <- mlr::getTaskData(task1)
     task1.target <- task1$task.desc$target
-
-    if (id %in% c(3492, 9967, 9979)) {
-      mixed <- (NROW(task1.data[task1.target]) %>% rnorm) > 1.5
-      task1.data[mixed, task1.target] <- sample(
-        task1.data[mixed, task1.target], replace = FALSE)
-    }
+    
+    # if (id %in% c(3492, 9967, 9979)) {
+    # mixed <- (NROW(task1.data[task1.target]) %>% rnorm) > 1.5
+    mixed <- (NROW(task1.data[task1.target]) %>% rnorm) > qnorm(0.9)
+    task1.data[mixed, task1.target] <- sample(
+      task1.data[mixed, task1.target], replace = FALSE)
+    # }
     
     task1.n <- nrow(task1.data)
     learn.sample.ids <- sample(task1.n, 0.75 * task1.n)
@@ -82,11 +84,9 @@ BenchmarkMabt <- function(n_cores) {
     id = task.ids, 
     .packages = c("dplyr", "mlr", "tuneRanger", "ranger")) %dopar% {
       t0 <- Sys.time()
-      set.seed(1)
       task.result <- CIsForTask(id)
       t1 <- Sys.time()
       task.result <- c(task.result, list(runtime = t1-t0))
-      paste0("6-revision/oml-bench-", id, ".RDS") %>% saveRDS(task.result, .)
       return(task.result)
     }
   parallel::stopCluster(par_clust)

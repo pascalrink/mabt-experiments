@@ -3,6 +3,7 @@ rm(list=ls())
 
 library(dplyr)
 library(doParallel)
+library(ggplot2)
 
 source("6-revision/ctg-example/GenCompTable-function.R")
 
@@ -130,6 +131,7 @@ CtgExampleAccuracy <- function(seed, n.cv = 1) {
   # bootstrap
   within1SE_preds <- (preds[, within1SE_selection] == 1) * 1.0
   within1SE_similar_mat <- similar_mat[, within1SE_selection]
+  t0 <- Sys.time()
   eval_boot <- boot::boot(
     within1SE_similar_mat, function(x, i) colMeans(x[i, ]), R = 10000)
   alpha <- 0.05
@@ -140,6 +142,7 @@ CtgExampleAccuracy <- function(seed, n.cv = 1) {
   
   mabt_ci <- MabtCi(
     eval_boot, alpha, measure, select_id, within1SE_preds, cls_thresh, labs)
+  t1 <- Sys.time()
   
   # standard cis
   n_test <- nrow(preds)
@@ -158,7 +161,10 @@ CtgExampleAccuracy <- function(seed, n.cv = 1) {
   rownames(sidak_cis) <- paste0(ci_methods, "-sidak")
   default_cis <- rbind(default_cis, sidak_cis)
   
-  rt_obj <- list(mat = results_mat, default = default_cis, mabt = mabt_ci)
+  rt_obj <- list(mat = results_mat, 
+                 default = default_cis, 
+                 mabt = mabt_ci, 
+                 mabt_runtime = t1-t0)
   return(rt_obj)
 }
 
@@ -181,7 +187,12 @@ CtgExampleAccuracy <- function(seed, n.cv = 1) {
 result_list <- readRDS("6-revision/ctg-example/ctg-example-rcv.RDS")
 comp_results <- GenCompTable(result_list)
 comp_results$table[13:18, ]
-do.call(rbind, comp_results$ci) %>% aggregate(ci ~ method, ., summary)
+comp_results_df <- do.call(rbind, comp_results$ci)
+aggregate(ci ~ method, comp_results_df, summary)
+
+ggplot(comp_results_df, aes(x = method, y = ci)) + 
+  geom_boxplot()
+
 
 CtgExampleAccuracy(38,  1) 
 CtgExampleAccuracy(38, 10)
