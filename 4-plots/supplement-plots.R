@@ -7,6 +7,7 @@ cat("\014")
 
 library(dplyr)
 library(ggplot2)
+library(ggpattern)
 
 # specify the directory of the confidence interval results here
 cis_dir <- "1-savefiles/cis/"
@@ -14,24 +15,26 @@ cis_dir <- "1-savefiles/cis/"
 # specify the directory for the results plots here
 plot_dir <- "4-plots/figures/supplement/"
 
-# custom ggsave function to save in A4 format
-.myggsave <- function(filename) {
-  ggsave(filename=filename, height = 297, width = 210, units = "mm")
-}
+source("4-plots/myggsave-function.R")
 
 # returns all the result plots to a specific simulation parameter configuration
-Plots <- function(fpath, plot_path, plot_name) {
+# Plots <- function(fpath, plot_path, plot_name) {
+Plots <- function(fpath, plot_path, run_count) {
   flist <- list.files(fpath)
   df <- lapply(
     flist, function(.file) paste0(fpath, .file) %>% readRDS) %>% 
     do.call(rbind, .)
+  
+  n_colors <- table(df$rule) %>% length
+  my_colors <- RColorBrewer::brewer.pal(3, "Pastel1")
+  my_colors <- my_colors[1:n_colors]
   
   # Formatting ----
   df$method <- factor(df$method, c("bt", "clopper-pearson", "delong", 
                                    "hanley-mcneal", "mabt", "wald", "wilson"))
   df$method <- recode(
     df$method, "bt" = "BT", "clopper-pearson" = "CP", "delong" = "DeLong", 
-    "hanley-mcneal" = "HMcN", "mabt" = "MABT", "wald" = "Wald", 
+    "hanley-mcneal" = "HM", "mabt" = "MABT", "wald" = "Wald", 
     "wilson" = "Wilson")
   df$rule <- recode(
     df$rule, "best" = "single best", "ten" = "top 10%", "se" = "within 1 SE")
@@ -54,112 +57,140 @@ Plots <- function(fpath, plot_path, plot_name) {
   df$acceptable_coverage <- (1-df$full_alpha) - 
     sqrt((1-df$full_alpha) * df$full_alpha / df$n_runs)
   df$undercovers <- ifelse(
-    df$coverage < df$acceptable_coverage, "undercovers", "valid")
+    df$coverage < df$acceptable_coverage, "liberal", "valid")
   
   # helper functions to plot figures for coverage, lower confidence bound, 
   # groundtruth performance, and tightness
   CoveragePlot <- function(df) {
     coverages <- aggregate(covers ~ method + rule, df, mean)
-    ggplot(coverages, aes(x = method, y = covers, fill = rule)) +
-      geom_bar(stat="identity", position = "dodge") + 
+    ggplot(coverages, aes(x = method, y = covers, fill = rule, pattern = rule)) +
+      geom_bar_pattern(stat = "identity", position = "dodge", 
+                       color = "black", pattern_fill = "black", 
+                       pattern_angle = 45, pattern_density = 0.1, 
+                       pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
       geom_text(
-        aes(label = substr(round(covers, 3), 2, 5)), vjust = 1.6, 
-        color = "white", size = 3, position = position_dodge(width = .9)) + 
+        aes(label = substr(round(covers, 3), 2, 5)), vjust = -1, 
+        color = "black", size = 5, position = position_dodge(width = 0.9)) + 
       coord_cartesian(ylim = c(0.9, 1)) +
-      labs(subtitle = "Coverage probability",
-           x        = "",
-           y        = "",
-           fill     = "") +
-      scale_fill_brewer(palette = "Set1") +
-      scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) +
+      labs(pattern = "") +
+      scale_fill_manual(values = my_colors) + 
+      scale_pattern_manual(values = c("single best" = "none", 
+                                      "top 10%" = "circle", 
+                                      "within 1 SE" = "stripe")) + 
+      scale_y_continuous(minor_breaks = seq(0, 1, 0.005)) +
       theme_minimal() +
-      theme(legend.position = "none", legend.key.size = unit(10, "points"))
+      theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+            legend.text = element_text(size = 16), 
+            axis.text = element_text(size = 16, color = "black"), 
+            axis.title = element_blank(), 
+            text = element_text(size = 16, color = "black")) +
+      guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+             fill = "none")
   }
   
   BoundPlot <- function(df) {
     subset(df, covers == 1) %>% 
-      ggplot(aes(x = method, y = bound, fill = rule, color = undercovers)) + 
-      geom_boxplot() + 
-      labs(subtitle = "Lower confidence bound", 
-           x        = "", 
-           y        = "", 
-           fill     = "", 
-           color    = "") + 
-      scale_fill_brewer(palette = "Set1") + 
-      scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
-      scale_color_manual(values = c("grey51", "black")) + 
+      ggplot(aes(x = method, y = bound, fill = rule, color = undercovers, pattern = rule)) + 
+      geom_boxplot_pattern(
+        pattern_fill = "black", pattern_angle = 45, pattern_density = 0.1, 
+        pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
+      labs(pattern = "", color = "") + 
+      scale_fill_manual(values = my_colors) + 
+      scale_pattern_manual(values = c("single best" = "none", 
+                                      "top 10%" = "circle", 
+                                      "within 1 SE" = "stripe")) + 
+      scale_y_continuous(minor_breaks = seq(0, 1, 0.05)) + 
+      scale_color_manual(values = c("grey71", "black")) + 
       theme_minimal() + 
-      theme(legend.position = "none", legend.key.size = unit(10, "points"))
+      theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+            legend.text = element_text(size = 16), 
+            axis.text = element_text(size = 16, color = "black"), 
+            axis.title = element_blank(), 
+            text = element_text(size = 16, color = "black")) +
+      guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+             fill = "none", 
+             color = guide_legend(override.aes = list(pattern = "none")))
   }
   
   GroundtruthPlot <- function(df) {
-    ggplot(
-      df, aes(fill = rule, y = groundtruth)) + 
-      geom_boxplot() +
-      labs(subtitle = "Final model true performance", 
-           x        = "", 
-           y        = "", 
-           fill     = "") + 
-      scale_fill_brewer(palette = "Set1") + 
-      scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
+    subset(df, method == "BT") %>% 
+      ggplot(aes(fill = rule, y = groundtruth, pattern = rule)) + 
+      geom_boxplot_pattern(color = "black", 
+        pattern_fill = "black", pattern_angle = 45, pattern_density = 0.1, 
+        pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
+      labs(pattern = "") + 
+      scale_fill_manual(values = my_colors) + 
+      scale_pattern_manual(values = c("single best" = "none", 
+                                      "top 10%" = "circle", 
+                                      "within 1 SE" = "stripe")) + 
+      scale_y_continuous(minor_breaks = seq(0, 1, 0.05)) + 
       theme_minimal() + 
-      theme(legend.position = "none", legend.key.size = unit(10, "points"), 
-            axis.text.x = element_blank(), axis.ticks.x = element_blank())
+      theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+            legend.text = element_text(size = 16), 
+            axis.text.x = element_blank(), 
+            axis.title = element_blank(), 
+            text = element_text(size = 16, color = "black"), 
+            ) +
+      guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+             fill = "none", 
+             color = guide_legend(override.aes = list(pattern = "none")))
   }
   
   TightnessPlot <- function(df) {
     subset(df, covers == 1) %>% 
-      ggplot(aes(x = method, y = tightness, fill = rule, color = undercovers)) + 
-      geom_boxplot() + 
-      labs(subtitle = "Tightness", 
-           x        = "", 
-           y        = "", 
-           fill     = "", 
-           color    = "") + 
-      scale_fill_brewer(palette = "Set1") + 
-      scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
-      scale_color_manual(values = c("grey51", "black")) + 
+      ggplot(aes(x = method, y = tightness, fill = rule, color = undercovers, pattern = rule)) + 
+      geom_boxplot_pattern(
+        pattern_fill = "black", pattern_angle = 45, pattern_density = 0.1, 
+        pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
+      labs(pattern = "", color = "") + 
+      scale_fill_manual(values = my_colors) + 
+      scale_pattern_manual(values = c("single best" = "none", 
+                                      "top 10%" = "circle", 
+                                      "within 1 SE" = "stripe")) + 
+      scale_y_continuous(minor_breaks = seq(0, 1, 0.05)) + 
+      scale_color_manual(values = c("grey71", "black")) + 
       theme_minimal() + 
-      theme(legend.position = "bottom", legend.key.size = unit(10, "points"))
+      theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+            legend.text = element_text(size = 16), 
+            axis.text = element_text(size = 16, color = "black"), 
+            axis.title = element_blank(), 
+            text = element_text(size = 16, color = "black")) +
+      guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+             fill = "none", 
+             color = guide_legend(override.aes = list(pattern = "none")))
   }
   
-  # this function calls all the helper functions and returns 
-  # the plots in a 2x2 grid
-  Plot <- function(df) {
-    plot_1 <- CoveragePlot(df)
-    plot_2 <- BoundPlot(df)
-    plot_3 <- GroundtruthPlot(df)
-    plot_4 <- TightnessPlot(df)
-    
-    plots <- cowplot::plot_grid(
-      plot_1, plot_2, plot_3, plot_4,
-      ncol = 1)
-    return(plots)
-  }
+  coverage_plot <- CoveragePlot(df)
+  paste0(plot_path, "coverage-", run_count, ".eps") %>% .myggsave(coverage_plot)
   
-  Plot(df)
-  paste0(plot_path, plot_name) %>% .myggsave
+  bound_plot <- BoundPlot(df)
+  paste0(plot_path, "bound-", run_count, ".eps") %>% .myggsave(bound_plot)
+  
+  groundtruth_plot <- GroundtruthPlot(df)
+  paste0(plot_path, "groundtruth-", run_count, ".eps") %>% .myggsave(groundtruth_plot)
+  
+  tightness_plot <- TightnessPlot(df)
+  paste0(plot_path, "tightness-", run_count, ".eps") %>% .myggsave(tightness_plot)
 }
 
-# Accuracy, case A features
-paste0(cis_dir, "class/normal/n200/cv/")   %>% Plots(plot_dir, "figure-A01.eps")
-paste0(cis_dir, "class/normal/n200/nocv/") %>% Plots(plot_dir, "figure-A02.eps")
-paste0(cis_dir, "class/normal/n400/cv/")   %>% Plots(plot_dir, "figure-A03.eps")
-paste0(cis_dir, "class/normal/n400/nocv/") %>% Plots(plot_dir, "figure-A04.eps")
+fns <- paste0(cis_dir, c(
+  # Accuracy, case A features
+  "class/normal/n200/cv/",
+  "class/normal/n200/nocv/",
+  "class/normal/n400/cv/",  
+  "class/normal/n400/nocv/", 
+  # Accuracy, case B features
+  "class/caret/n200/cv/", 
+  "class/caret/n200/nocv/", 
+  "class/caret/n400/cv/", 
+  "class/caret/n400/nocv/", 
+  # AUC, case A features
+  "auc/normal/n400/cv/",
+  "auc/normal/n600/cv/",
+  # AUC, case B features
+  "auc/caret/n400/cv/", 
+  "auc/caret/n600/cv/"))
 
-# Accuracy, case B features
-paste0(cis_dir, "class/caret/n200/cv/")    %>% Plots(plot_dir, "figure-A05.eps")
-paste0(cis_dir, "class/caret/n200/nocv/")  %>% Plots(plot_dir, "figure-A06.eps")
-paste0(cis_dir, "class/caret/n400/cv/")    %>% Plots(plot_dir, "figure-A07.eps")
-paste0(cis_dir, "class/caret/n400/nocv/")  %>% Plots(plot_dir, "figure-A08.eps")
-
-# AUC, case A features
-paste0(cis_dir, "auc/normal/n400/cv/")     %>% Plots(plot_dir, "figure-A09.eps")
-paste0(cis_dir, "auc/normal/n600/cv/")     %>% Plots(plot_dir, "figure-A10.eps")
-
-# AUC, case B features
-paste0(cis_dir, "auc/caret/n400/cv/")      %>% Plots(plot_dir, "figure-A11.eps")
-paste0(cis_dir, "auc/caret/n600/cv/")      %>% Plots(plot_dir, "figure-A12.eps")
-
-
+length(fns) %>% seq %>% sapply(function(i) {Plots(fns[i], plot_dir, i)})
+write.csv(fns, paste0(plot_dir, "fig-param-configs-list.csv"))
 

@@ -1,5 +1,5 @@
 
-# This scripts generates the prediction accuracy simulation experiment 
+# This scripts generates the AUC simulation experiment 
 # results plots shown in the main document
 
 rm(list = ls())
@@ -8,6 +8,7 @@ cat("\014")
 
 library(dplyr)
 library(ggplot2)
+library(ggpattern)
 
 fpaths <- paste0(
   "1-savefiles/cis/auc/", 
@@ -29,8 +30,8 @@ df$method <- factor(df$method, c("bt", "clopper-pearson", "hanley-mcneal",
                                  "mabt", "delong", "wald", "wilson"))
 df$method <- recode(df$method, 
                     "bt" = "BT", "clopper-pearson" = "CP", 
-                    "hanley-mcneal" = "HMcN", "mabt" = "MABT", 
-                    "delong" = "Wilson/DeLong", "wald" = "Wald", 
+                    "hanley-mcneal" = "HM", "mabt" = "MABT", 
+                    "delong" = "DeLong", "wald" = "Wald", 
                     "wilson" = "Wilson")
 df$rule <- recode(
   df$rule, "best" = "single best", "ten" = "top 10%", "se" = "within 1 SE")
@@ -50,89 +51,119 @@ df <- merge(df, coverage_table)
 df$acceptable_coverage <- (1-df$full_alpha) - 
   sqrt((1-df$full_alpha) * df$full_alpha / df$n_runs)
 df$undercovers <- ifelse(
-  df$coverage < df$acceptable_coverage, "undercovers", "valid") %>% factor
+  df$coverage < df$acceptable_coverage, "liberal", "valid") %>% factor
+
+my_colors <- RColorBrewer::brewer.pal(3, "Pastel1")
 
 
-# Figure 6b ----
+# Figure 7 ----
 coverage_df <- aggregate(covers ~ method + rule + n_eval + feats_type, df, mean)
-ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method)) +
-  geom_bar(stat="identity", position = "dodge") + 
+ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method, pattern = method)) +
+  geom_bar_pattern(stat = "identity", position = "dodge", 
+                   color = "black", pattern_fill = "black", 
+                   pattern_angle = 45, pattern_density = 0.1, 
+                   pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
   geom_text(
-    aes(label = substr(round(covers, 3), 2, 5)), vjust = 1.6, 
-    color = "white", size = 3, position = position_dodge(width = .9)) + 
-  coord_cartesian(ylim = c(0.90, 0.96)) +
+    aes(label = substr(round(covers, 3), 2, 5)), vjust = -1, 
+    color = "black", size = 6, position = position_dodge(width = 0.9)) + 
+  coord_cartesian(ylim = c(0.9, 0.97)) +
   facet_wrap(~ feats_type) + 
-  labs(#subtitle = "AUC: coverage probability",
-       x        = "evaluation sample size",
-       y        = "", 
-       fill     = "") +
-  scale_fill_brewer(palette = "Set1") +
-  scale_y_continuous(minor_breaks = seq(0, 1, 0.01)) +
+  labs(pattern = "", x = "evaluation sample size") +
+  scale_fill_manual(values = my_colors) + 
+  scale_pattern_manual(values = c("DeLong" = "none", 
+                                  "MABT" = "circle", 
+                                  "BT" = "stripe")) + 
+  scale_y_continuous(minor_breaks = seq(0, 1, 0.005)) +
   theme_minimal() +
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
-        strip.text.x = element_blank())
-ggsave("4-plots/figures/paper/figure-6b.eps")
+  theme(legend.position = "bottom", legend.key.size = unit(16, "points"), 
+        legend.text = element_text(size = 16), 
+        axis.text = element_text(size = 16, color = "black"), 
+        axis.title.y = element_blank(), 
+        text = element_text(size = 16, color = "black"), 
+        strip.text.x = element_text(size = 16)) +
+  guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+         fill = "none")
+.myggsave("4-plots/figures/paper/fig-07.eps", last_plot())
 
 
-# Figure 7b ----
-subset(df, covers == 1) %>%
-  ggplot(
-    aes(x = factor(n_eval), y = bound, fill = method, color = undercovers)) + 
-  geom_boxplot() + 
-  facet_wrap(~ feats_type) + 
-  scale_fill_brewer(palette = "Set1") + 
-  scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
-  scale_color_manual(values = c("grey51", "black")) + 
+# Figure 9 ----
+subset(df, covers == 1) %>% 
+  ggplot(aes(x = factor(n_eval), y = bound, fill = method, color = undercovers, pattern = method)) + 
+  geom_boxplot_pattern(
+    pattern_fill = "black", pattern_angle = 45, pattern_density = 0.1, 
+    pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
+  facet_wrap(~ feats_type) +
+  labs(pattern = "", color = "", x = "evaluation sample size") + 
+  scale_fill_manual(values = my_colors) + 
+  scale_pattern_manual(values = c("DeLong" = "none", 
+                                  "MABT" = "circle", 
+                                  "BT" = "stripe")) + 
+  scale_y_continuous(minor_breaks = seq(0, 1, 0.05)) + 
+  scale_color_manual(values = c("grey71", "black")) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
-        strip.text.x = element_blank()) + 
-  labs(#title    = "AUC: lower confidence bound", 
-       x        = "evaluation sample size", 
-       y        = "size of lower bound", 
-       fill     = "", 
-       color    = "")
-ggsave("4-plots/figures/paper/figure-7b.eps")
+  theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+        legend.text = element_text(size = 16), 
+        axis.text = element_text(size = 16, color = "black"), 
+        axis.title.y = element_blank(), 
+        text = element_text(size = 16, color = "black"), 
+        strip.text.x = element_text(size = 16)) +
+  guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+         fill = "none", 
+         color = guide_legend(override.aes = list(pattern = "none")))
+.myggsave("4-plots/figures/paper/fig-09.eps", last_plot())
 
 
-# Figure 8b ----
-subset(df, covers == 1) %>%
-  ggplot(
-    aes(x = factor(n_eval), y = groundtruth - bound, 
-        fill = method, color = undercovers)) + 
-  geom_boxplot() + 
-  coord_cartesian(ylim = c(0, 0.35)) +
+# Figure 11 ----
+subset(df, covers == 1) %>% 
+  ggplot(aes(x = factor(n_eval), y = tightness, fill = method, color = undercovers, pattern = method)) + 
+  geom_boxplot_pattern(
+    pattern_fill = "black", pattern_angle = 45, pattern_density = 0.1, 
+    pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
   facet_wrap(~ feats_type) + 
-  scale_fill_brewer(palette = "Set1") + 
-  scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) + 
-  scale_color_manual(values = c("grey51", "black")) + 
+  labs(pattern = "", color = "", x = "evaluation sample size") + 
+  scale_fill_manual(values = my_colors) + 
+  scale_pattern_manual(values = c("DeLong" = "none", 
+                                  "MABT" = "circle", 
+                                  "BT" = "stripe")) + 
+  scale_y_continuous(minor_breaks = seq(0, 1, 0.05)) + 
+  scale_color_manual(values = c("grey71", "black")) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
-        strip.text.x = element_blank()) + 
-  labs(#title    = "AUC: tightness", 
-       x        = "evaluation sample size", 
-       y        = "", 
-       fill     = "", 
-       color    = "")
-ggsave("4-plots/figures/paper/figure-8b.eps")
+  theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+        legend.text = element_text(size = 16), 
+        axis.text = element_text(size = 16, color = "black"), 
+        axis.title.y = element_blank(), 
+        text = element_text(size = 16, color = "black"), 
+        strip.text.x = element_text(size = 16)) +
+  guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
+         fill = "none", 
+         color = guide_legend(override.aes = list(pattern = "none")))
+.myggsave("4-plots/figures/paper/fig-11.eps", last_plot())
 
 
-# Figure 9b ----
+# Figure 13 ----
 # true performance of final model does not depend on the confidence interval 
 # estimation method but on the selection rule; BT provides final model 
 # performance from 'single best' selection rule, MABT provides final model 
 # performance from 'top 10%' selection rule
 subset(df, method %in% c("BT", "MABT")) %>% 
-  ggplot(aes(x = factor(n_eval), y = groundtruth, fill = rule)) +
-  geom_boxplot() +
+  ggplot(aes(x = factor(n_eval), y = groundtruth, fill = rule, pattern = rule)) + 
+  geom_boxplot_pattern(color = "black", 
+                       pattern_fill = "black", pattern_angle = 45, pattern_density = 0.1, 
+                       pattern_spacing = 0.02, pattern_key_scale_factor = 0.5) + 
   facet_wrap(~ feats_type) +
-  scale_fill_brewer(palette = "Set1", ) +
-  scale_y_continuous(minor_breaks = seq(0, 1, 0.025)) +
+  labs(pattern = "", x = "evaluation sample size") +
+  scale_fill_manual(values = my_colors[c(3, 2)]) + 
+  scale_pattern_manual(values = c("single best" = "none", 
+                                  "top 10%" = "circle")) + 
+  scale_y_continuous(minor_breaks = seq(0, 1, 0.05)) + 
   theme_minimal() + 
-  theme(legend.position = "bottom", legend.key.size = unit(10, "points"), 
-        strip.text.x = element_blank()) +
-  labs(#title    = "AUC: true performance of final model",
-       x        = "evaluation sample size",
-       y        = "",
-       fill    = "")
-ggsave("4-plots/figures/paper/figure-9b.eps")
+  theme(legend.position = "bottom", legend.key.size = unit(24, "points"), 
+        legend.text = element_text(size = 16), 
+        axis.text = element_text(size = 16, color = "black"), 
+        axis.title.y = element_blank(), 
+        text = element_text(size = 16, color = "black"), 
+        strip.text.x = element_text(size = 16)) +
+  guides(pattern = guide_legend(override.aes = list(fill = my_colors[c(3, 2)])),
+         fill = "none")
+.myggsave("4-plots/figures/paper/fig-13.eps", last_plot())
 

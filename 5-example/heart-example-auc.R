@@ -7,7 +7,7 @@ library(dplyr)
 library(doParallel)
 
 source("5-example/heart-example-helper-functions.R")
-source("5-example/GenCompTable-function.R")
+source("6-revision/ctg-example/GenCompTable-function.R")
 
 # n_cores <- 50
 # n_runs <- 500

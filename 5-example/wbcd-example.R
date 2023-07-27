@@ -201,7 +201,7 @@ q1 <- auc / (2 - auc)
 q2 <- 2 * auc^2 / (1 + auc)
 n_success <- ((eval_preds[, within_1se_models[final_model_1se]] > cls_thresh) * 1.0 == 
                 eval_labs) %>% sum 
-n_fail <- n_obs - n_success
+n_fail <- n_eval - n_success
 numerator <- auc * (1-auc) + (n_success + 1)*(q1 - auc^2) + 
   (n_fail -1)*(q2 - auc^2)
 denominator <- n_success * n_fail
