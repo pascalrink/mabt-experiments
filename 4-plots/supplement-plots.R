@@ -192,5 +192,5 @@ fns <- paste0(cis_dir, c(
   "auc/caret/n600/cv/"))
 
 length(fns) %>% seq %>% sapply(function(i) {Plots(fns[i], plot_dir, i)})
-write.csv(fns, paste0(plot_dir, "fig-param-configs-list.csv"))
+# write.csv(fns, paste0(plot_dir, "fig-param-configs-list.csv"))
 

@@ -1,5 +1,5 @@
 
-# This script generates Figure 5 in the main document
+# This script generates Figure 5 in the main document (coverage comparison)
 
 rm(list = ls())
 graphics.off()
@@ -47,7 +47,6 @@ df_rf$measure <- "class"
 df_rf$classifier <- "random forest"
 
 df_lasso$classifier <- "lasso"
-df_lasso <- df_lasso[df_lasso$cv == "TRUE", ]
 df_lasso <- subset(df_lasso, select = c(est, method, bound, groundtruth, covers, n_eval, rule, feats_type, cv, measure, classifier))
 df <- rbind(df_lasso, df_rf)
 
@@ -85,5 +84,3 @@ ggplot(coverage_df, aes(x = method, y = covers, fill = pipeline, pattern = pipel
         axis.title.x = element_blank()) +
   guides(pattern = guide_legend(override.aes = list(fill = my_colors[1:2])), 
          fill = "none")
-# .myggsave("4-plots/figures/paper/fig-05.eps", last_plot())
-

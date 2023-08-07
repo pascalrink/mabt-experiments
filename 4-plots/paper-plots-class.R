@@ -85,7 +85,7 @@ ggplot(coverage_df, aes(x = factor(n_eval), y = covers, fill = method, pattern =
         strip.text.x = element_text(size = 16)) +
   guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
          fill = "none")
-.myggsave("4-plots/figures/paper/fig-06.eps", last_plot())
+# .myggsave("4-plots/figures/paper/fig-06.eps", last_plot())
 
 # Figure 8 ----
 subset(df, covers == 1) %>% 
@@ -111,7 +111,7 @@ subset(df, covers == 1) %>%
   guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
          fill = "none", 
          color = guide_legend(override.aes = list(pattern = "none")))
-.myggsave("4-plots/figures/paper/fig-08.eps", last_plot())
+# .myggsave("4-plots/figures/paper/fig-08.eps", last_plot())
 
 
 # Figure 10 ----
@@ -138,7 +138,7 @@ subset(df, covers == 1) %>%
   guides(pattern = guide_legend(override.aes = list(fill = my_colors)),
          fill = "none", 
          color = guide_legend(override.aes = list(pattern = "none")))
-.myggsave("4-plots/figures/paper/fig-10.eps", last_plot())
+# .myggsave("4-plots/figures/paper/fig-10.eps", last_plot())
 
 
 # Figure 12 ----
@@ -166,6 +166,6 @@ subset(df, method %in% c("BT", "MABT")) %>%
         strip.text.x = element_text(size = 16)) +
   guides(pattern = guide_legend(override.aes = list(fill = my_colors[c(3, 2)])),
          fill = "none")
-.myggsave("4-plots/figures/paper/fig-12.eps", last_plot())
+# .myggsave("4-plots/figures/paper/fig-12.eps", last_plot())
 
 
