@@ -1,5 +1,5 @@
 
-# This function implements the multiplicity-adjusted bootstrap tilting 
+# This function implements the multiplicity-adjusted bootstrap tilting (MABT)
 # lower confidence bound estimation as described in Rink & Brannath (2022)
 
 MabtCi <- function(
